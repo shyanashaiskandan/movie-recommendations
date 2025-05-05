@@ -21,7 +21,6 @@ app.post('/api/recommendations', async (req, res) => {
   try {
     const { userInput } = req.body;
 
-
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
@@ -38,7 +37,6 @@ app.post('/api/recommendations', async (req, res) => {
 
     const suggestedMovies = completion.choices[0].message.content.split(',').map(title => title.trim()).slice(0, 3);
     
-    // Fetch movie details from TMDB
     const moviePromises = suggestedMovies.map(async (title) => {
       const searchResponse = await axios.get(`${TMDB_BASE_URL}/search/movie`, {
         params: {
@@ -68,7 +66,7 @@ app.post('/api/recommendations', async (req, res) => {
           params: {
             api_key: TMDB_API_KEY,
             query: title,
-            page: 2, 
+            page: 2,
           },
         });
 
@@ -87,7 +85,6 @@ app.post('/api/recommendations', async (req, res) => {
       const additionalMovies = (await Promise.all(additionalPromises)).filter(movie => movie !== null);
       movies.push(...additionalMovies);
     }
-
 
     res.json(movies.slice(0, 3));
   } catch (error) {
