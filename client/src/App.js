@@ -10,37 +10,46 @@ import {
   Image,
   Link,
   Container,
+  useToast,
 } from '@chakra-ui/react';
 
 function App() {
   const [userInput, setUserInput] = useState('');
   const [movies, setMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const toast = useToast();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!userInput.trim()) return;
     
-    const mockMovies = [
-      {
-        title: 'Inception',
-        year: '2010',
-        image: 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg',
-        trailer: 'https://www.youtube.com/watch?v=YoHD9XEInc0',
-      },
-      {
-        title: 'The Shawshank Redemption',
-        year: '1994',
-        image: 'https://m.media-amazon.com/images/M/MV5BNDE3ODcxYzMtY2YzZC00NmNlLWJiNDMtZDViZWM2MzIxZDYwXkEyXkFqcGdeQXVyNjAwNDUxODI@._V1_.jpg',
-        trailer: 'https://www.youtube.com/watch?v=6NL1G4H3U8A',
-      },
-      {
-        title: 'The Dark Knight',
-        year: '2008',
-        image: 'https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_.jpg',
-        trailer: 'https://www.youtube.com/watch?v=EXeTwQWrcwY',
-      },
-    ];
-    setMovies(mockMovies);
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:3001/api/recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userInput }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get recommendations');
+      }
+
+      const data = await response.json();
+      setMovies(data);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to get movie recommendations. Please try again.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -57,7 +66,12 @@ function App() {
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
               />
-              <Button type="submit" colorScheme="blue">
+              <Button 
+                type="submit" 
+                colorScheme="blue" 
+                isLoading={isLoading}
+                loadingText="Getting recommendations..."
+              >
                 Get Recommendations
               </Button>
             </VStack>
